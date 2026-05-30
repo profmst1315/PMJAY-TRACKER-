@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM-JAY ફોલોઅપ ટ્રેકર</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#0b1e3d; --blue:#1a3a6e; --accent:#f0a500;
+  --green:#16a34a; --red:#dc2626; --orange:#ea580c;
+  --light:#eef3fc; --border:#cdd8f0; --white:#fff;
+  --text:#1e293b; --muted:#64748b;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Poppins','Noto Sans Gujarati',sans-serif;background:#eef3fc;min-height:100vh;color:var(--text);}
+
+/* TOPBAR */
+.topbar{background:linear-gradient(135deg,#0b1e3d,#1a3a6e);padding:0 18px;display:flex;align-items:center;justify-content:space-between;height:58px;box-shadow:0 2px 16px rgba(0,0,0,.3);position:sticky;top:0;z-index:100;}
+.topbar-l{display:flex;align-items:center;gap:10px;}
+.topbar-l .logo{font-size:26px;}
+.topbar-l h1{color:var(--accent);font-size:.95rem;font-weight:700;font-family:'Noto Sans Gujarati',sans-serif;line-height:1.2;}
+.topbar-l p{color:#8aaed4;font-size:.65rem;}
+.topbar-r{background:rgba(255,255,255,.1);border-radius:20px;padding:4px 12px;color:#aac4e8;font-size:.68rem;font-weight:600;}
+
+/* TABS */
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);position:sticky;top:58px;z-index:99;}
+.tab-btn{flex:1;padding:13px 4px;background:none;border:none;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer;font-family:'Noto Sans Gujarati',sans-serif;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);background:#f8faff;}
+
+/* PAGES */
+.page{display:none;padding:16px;max-width:660px;margin:0 auto;}
+.page.active{display:block;}
+
+/* CARD */
+.card{background:#fff;border-radius:18px;padding:20px;margin-bottom:14px;box-shadow:0 2px 14px rgba(0,0,0,.07);border:1px solid var(--border);}
+.card-title{font-size:.88rem;font-weight:700;color:var(--blue);margin-bottom:16px;display:flex;align-items:center;gap:8px;font-family:'Noto Sans Gujarati',sans-serif;padding-bottom:10px;border-bottom:2px solid var(--light);}
+
+/* FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{margin-bottom:14px;}
+label{display:block;font-size:.74rem;font-weight:600;color:var(--muted);margin-bottom:5px;font-family:'Noto Sans Gujarati',sans-serif;}
+input[type=text],input[type=date]{width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:12px;font-size:.9rem;font-family:'Poppins',sans-serif;color:var(--text);background:var(--light);outline:none;transition:border .2s,background .2s,box-shadow .2s;}
+input:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(26,58,110,.1);}
+input::placeholder{color:#b0bdd4;}
+
+/* FIRST VISIT HIGHLIGHT */
+.first-visit-box{background:linear-gradient(135deg,#f0f7ff,#e8f0fe);border:2px solid #bfdbfe;border-radius:14px;padding:14px;margin-bottom:14px;}
+.first-visit-box .fv-label{font-size:.75rem;font-weight:700;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:6px;font-family:'Noto Sans Gujarati',sans-serif;}
+
+/* BUTTONS */
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,#1a3a6e,#2a5298);color:#fff;border:none;border-radius:13px;font-size:.92rem;font-weight:700;cursor:pointer;font-family:'Noto Sans Gujarati',sans-serif;box-shadow:0 4px 14px rgba(26,58,110,.3);transition:transform .15s,box-shadow .15s;letter-spacing:.3px;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,58,110,.35);}
+.btn-primary:active{transform:scale(.98);}
+.btn-green{background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 4px 14px rgba(22,163,74,.3);}
+.btn-sm{padding:7px 14px;width:auto;font-size:.78rem;border-radius:9px;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.stat-card{background:#fff;border-radius:13px;padding:12px 6px;text-align:center;border:2px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.stat-card .snum{font-size:1.7rem;font-weight:700;line-height:1;}
+.stat-card .slabel{font-size:.6rem;color:var(--muted);margin-top:3px;font-family:'Noto Sans Gujarati',sans-serif;}
+.c-blue .snum{color:var(--blue);} .c-green .snum{color:var(--green);}
+.c-red .snum{color:var(--red);} .c-orange .snum{color:var(--orange);}
+
+/* SEARCH */
+.search-bar{width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:11px;font-size:.85rem;font-family:'Poppins',sans-serif;outline:none;background:#fff;margin-bottom:12px;transition:border .2s;}
+.search-bar:focus{border-color:var(--blue);}
+
+/* IP SEARCH ROW */
+.ip-row{display:flex;gap:8px;margin-bottom:12px;}
+.ip-row input{flex:1;}
+.ip-row button{padding:10px 16px;background:linear-gradient(135deg,#1a3a6e,#2a5298);color:#fff;border:none;border-radius:11px;font-size:.82rem;cursor:pointer;font-family:'Noto Sans Gujarati',sans-serif;font-weight:700;white-space:nowrap;transition:transform .15s;}
+.ip-row button:hover{transform:translateY(-1px);}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:13px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;min-width:520px;}
+thead{background:linear-gradient(135deg,#0b1e3d,#1a3a6e);}
+thead th{color:#fff;padding:10px 10px;font-size:.69rem;font-weight:600;text-align:left;white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:hover{background:var(--light);}
+tbody tr:last-child{border-bottom:none;}
+tbody td{padding:9px 10px;font-size:.76rem;white-space:nowrap;}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.67rem;font-weight:700;font-family:'Noto Sans Gujarati',sans-serif;}
+.badge.eligible{background:#dcfce7;color:#16a34a;}
+.badge.warning{background:#ffedd5;color:#ea580c;}
+.badge.expired{background:#fee2e2;color:#dc2626;}
+.badge.blue{background:#dbeafe;color:#1a3a6e;}
+.badge.gray{background:#f1f5f9;color:#475569;}
+
+/* ACTION BUTTONS */
+.del-btn{background:none;border:1px solid #fca5a5;color:var(--red);border-radius:6px;padding:3px 8px;font-size:.68rem;cursor:pointer;transition:background .15s;}
+.del-btn:hover{background:#fee2e2;}
+.view-btn{background:none;border:1px solid var(--border);color:var(--blue);border-radius:6px;padding:3px 8px;font-size:.68rem;cursor:pointer;font-weight:600;transition:background .15s;}
+.view-btn:hover{background:var(--light);}
+
+/* STATUS REPORT */
+.sr-banner{background:linear-gradient(135deg,#0b1e3d,#1a3a6e);border-radius:18px;padding:20px;color:#fff;margin-bottom:14px;}
+.sr-banner .sr-name{font-size:1.1rem;font-weight:700;font-family:'Noto Sans Gujarati',sans-serif;}
+.sr-banner .sr-meta{font-size:.74rem;color:#8aaed4;margin-top:5px;line-height:1.7;}
+.sr-banner .sr-status{margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+
+/* PROGRESS */
+.prog-wrap{background:rgba(255,255,255,.15);border-radius:50px;height:14px;overflow:hidden;margin:10px 0 4px;}
+.prog-fill{height:100%;border-radius:50px;transition:width .8s ease;}
+.prog-fill.eligible{background:linear-gradient(90deg,#4ade80,#16a34a);}
+.prog-fill.warning{background:linear-gradient(90deg,#fb923c,#ea580c);}
+.prog-fill.expired{background:linear-gradient(90deg,#f87171,#dc2626);}
+
+/* VISIT TIMELINE */
+.visit-timeline{display:flex;flex-direction:column;gap:8px;}
+.visit-item{display:flex;align-items:center;gap:12px;background:var(--light);border-radius:12px;padding:11px 14px;border:1px solid var(--border);}
+.v-num{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#1a3a6e,#2a5298);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;}
+.v-info{flex:1;}
+.v-info .vt{font-size:.83rem;font-weight:700;}
+.v-info .vs{font-size:.7rem;color:var(--muted);margin-top:2px;}
+.visit-item.exp-visit{border-color:#fca5a5;background:#fff5f5;}
+.visit-item.exp-visit .v-num{background:linear-gradient(135deg,#dc2626,#b91c1c);}
+
+/* ADD VISIT SECTION */
+.add-visit-section{border-top:2px dashed var(--border);margin-top:16px;padding-top:16px;}
+.add-visit-title{font-size:.8rem;font-weight:700;color:var(--blue);margin-bottom:10px;font-family:'Noto Sans Gujarati',sans-serif;display:flex;align-items:center;gap:6px;}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:36px 20px;color:var(--muted);font-family:'Noto Sans Gujarati',sans-serif;}
+.empty-state .ei{font-size:40px;margin-bottom:8px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0b1e3d;color:#fff;padding:12px 24px;border-radius:30px;font-size:.82rem;font-family:'Noto Sans Gujarati',sans-serif;box-shadow:0 4px 24px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .3s;z-index:9999;white-space:nowrap;}
+.toast.show{opacity:1;}
+
+@media(max-width:420px){
+  .form-row{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-l">
+    <div class="logo">🏥</div>
+    <div>
+      <h1>PM-JAY ફોલોઅપ ટ્રેકર</h1>
+      <p>Pradhan Mantri Jan Arogya Yojana • 15-Day Free Follow-up</p>
+    </div>
+  </div>
+  <div class="topbar-r">15 Days</div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active"  onclick="switchTab('add',this)">➕ નવો દર્દી</button>
+  <button class="tab-btn"        onclick="switchTab('status',this)">📊 Status</button>
+  <button class="tab-btn"        onclick="switchTab('list',this)">📋 યાદી</button>
+  <button class="tab-btn"        onclick="switchTab('excel',this)">📥 Excel</button>
+</div>
+
+<!-- ════════════════ TAB 1 — નવો દર્દી ════════════════ -->
+<div class="page active" id="page-add">
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">📝 દર્દીની માહિતી ઉમેરો</div>
+
+    <div class="form-group">
+      <label>દર્દીનું નામ *</label>
+      <input type="text" id="f-name" placeholder="દા.ત. રાજેશ પટેલ" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>IP No. *</label>
+        <input type="text" id="f-ip" placeholder="IP નંબર" />
+      </div>
+      <div class="form-group">
+        <label>UH No.</label>
+        <input type="text" id="f-uh" placeholder="UH નંબર" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Discharge Date *</label>
+      <input type="date" id="f-discharge" />
+    </div>
+
+    <!-- First Follow-up -->
+    <div class="first-visit-box">
+      <div class="fv-label">🔄 Follow-up Visit #1 (પ્રથમ મુલાકાત)</div>
+      <div class="form-row">
+        <div class="form-group" style="margin:0;">
+          <label>Follow-up Date *</label>
+          <input type="date" id="f-followup" />
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label>નોંધ (Optional)</label>
+          <input type="text" id="f-note" placeholder="દા.ત. BP check" />
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="addPatient()">✅ સ્ટોર કરો</button>
+  </div>
+
+  <!-- Quick Add Visit by IP -->
+  <div class="card">
+    <div class="card-title">🔄 Follow-up Visit ઉમેરો (IP No. દ્વારા)</div>
+    <div class="ip-row">
+      <input type="text" id="quick-ip" placeholder="IP No. ટાઈપ કરો..." />
+      <button onclick="quickSearch()">શોધો</button>
+    </div>
+    <div id="quick-result"></div>
+  </div>
+</div>
+
+<!-- ════════════════ TAB 2 — STATUS ════════════════ -->
+<div class="page" id="page-status">
+  <div style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">🔍 IP No. / નામ થી Status જૂઓ</div>
+      <div class="ip-row">
+        <input type="text" id="sr-query" placeholder="IP No. અથવા નામ..." />
+        <button onclick="showStatus()">જૂઓ</button>
+      </div>
+    </div>
+    <div id="sr-content"></div>
+  </div>
+</div>
+
+<!-- ════════════════ TAB 3 — LIST ════════════════ -->
+<div class="page" id="page-list">
+  <div style="margin-top:16px;">
+    <div class="stats-row">
+      <div class="stat-card c-blue"><div class="snum" id="ls-total">0</div><div class="slabel">કુલ દર્દી</div></div>
+      <div class="stat-card c-green"><div class="snum" id="ls-elig">0</div><div class="slabel">✅ ઉપ.</div></div>
+      <div class="stat-card c-red"><div class="snum" id="ls-exp">0</div><div class="slabel">❌ ઓવ.</div></div>
+      <div class="stat-card c-orange"><div class="snum" id="ls-vis">0</div><div class="slabel">🔄 Visits</div></div>
+    </div>
+    <input class="search-bar" type="text" id="list-q" placeholder="🔍 નામ / IP / UH..." oninput="renderList()" />
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>નામ</th><th>IP No.</th><th>UH No.</th>
+            <th>Discharge</th><th>Visits</th><th>Last Visit</th><th>Status</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="list-tbody"></tbody>
+      </table>
+      <div id="list-empty" class="empty-state" style="display:none;">
+        <div class="ei">🏥</div><div>કોઈ દર્દી નથી. "નવો દર્દી" ટૅબ માં ઉમેરો.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ TAB 4 — EXCEL ════════════════ -->
+<div class="page" id="page-excel">
+  <div style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">📊 Excel Report</div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px;font-family:'Noto Sans Gujarati',sans-serif;">
+        2 Sheets: (1) Patient Summary &nbsp;(2) All Follow-up Visits
+      </p>
+      <div class="stats-row">
+        <div class="stat-card c-blue"><div class="snum" id="es-total">0</div><div class="slabel">કુલ</div></div>
+        <div class="stat-card c-green"><div class="snum" id="es-elig">0</div><div class="slabel">✅ ઉપ.</div></div>
+        <div class="stat-card c-red"><div class="snum" id="es-exp">0</div><div class="slabel">❌ ઓવ.</div></div>
+        <div class="stat-card c-orange"><div class="snum" id="es-vis">0</div><div class="slabel">Visits</div></div>
+      </div>
+      <button class="btn-primary btn-green" style="margin-bottom:10px;" onclick="exportExcel()">⬇️ Excel ડાઉનલોડ (.xlsx)</button>
+      <button onclick="clearAll()" style="width:100%;padding:11px;background:none;border:2px solid #fca5a5;color:var(--red);border-radius:12px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Noto Sans Gujarati',sans-serif;">🗑️ બધો ડેટા ડિલીટ</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'pmjay_v3';
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e) { return []; } };
+const save = arr => localStorage.setItem(KEY, JSON.stringify(arr));
+
+const fmtDate = str => { if (!str) return ''; const [y,m,d]=str.split('-'); return `${d}/${m}/${y}`; };
+const daysBetween = (a,b) => { const da=new Date(a); da.setHours(0,0,0,0); const db=new Date(b); db.setHours(0,0,0,0); return Math.floor((db-da)/86400000); };
+const today = () => new Date().toISOString().split('T')[0];
+
+function getStatus(discharge, refDate) {
+  const diff = daysBetween(discharge, refDate);
+  const left = 15 - diff;
+  if (diff < 0)  return { cls:'eligible', label:'ડિ. ઘ. નથી', done:0,  left:15 };
+  if (left > 3)  return { cls:'eligible', label:'✅ ઉપલ્બ્ધ',  done:diff, left };
+  if (left > 0)  return { cls:'warning',  label:'⚠️ ઓછો',     done:diff, left };
+  return               { cls:'expired',  label:'❌ ઓવર',     done:Math.min(diff,15), left:0 };
+}
+
+// ── TABS ──
+function switchTab(tab, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  el.classList.add('active');
+  if (tab==='list')  { calcStats('ls'); renderList(); }
+  if (tab==='excel') { calcStats('es'); }
+}
+
+function calcStats(pfx) {
+  const pts = load();
+  let elig=0, exp=0, vis=0;
+  pts.forEach(p => {
+    vis += p.visits.length;
+    const ref = p.visits.length ? p.visits[p.visits.length-1].date : today();
+    const st = getStatus(p.discharge, ref);
+    if (st.cls==='expired') exp++; else elig++;
+  });
+  document.getElementById(pfx+'-total').textContent = pts.length;
+  document.getElementById(pfx+'-elig').textContent  = elig;
+  document.getElementById(pfx+'-exp').textContent   = exp;
+  document.getElementById(pfx+'-vis').textContent   = vis;
+}
+
+// ── ADD PATIENT ──
+document.getElementById('f-followup').value = today();
+
+function addPatient() {
+  const name = document.getElementById('f-name').value.trim();
+  const ip   = document.getElementById('f-ip').value.trim();
+  const uh   = document.getElementById('f-uh').value.trim();
+  const disc = document.getElementById('f-discharge').value;
+  const fuDate = document.getElementById('f-followup').value;
+  const fuNote = document.getElementById('f-note').value.trim();
+
+  if (!name)  { showToast('⚠️ દર્દીનું નામ ભરો'); return; }
+  if (!ip)    { showToast('⚠️ IP No. ભરો'); return; }
+  if (!disc)  { showToast('⚠️ Discharge Date ભરો'); return; }
+  if (!fuDate){ showToast('⚠️ Follow-up Date ભરો'); return; }
+
+  const pts = load();
+  if (pts.find(p => p.ip === ip)) { showToast('⚠️ આ IP No. પહેલાથી છે'); return; }
+
+  const st = getStatus(disc, fuDate);
+  if (st.cls === 'expired' && !confirm('15 દિવસ ઓવર. છતાં ઉમેરવું?')) return;
+
+  pts.push({
+    id: Date.now(), name, ip, uh, discharge: disc,
+    visits: [{ num:1, date: fuDate, note: fuNote }]
+  });
+  save(pts);
+
+  ['f-name','f-ip','f-uh','f-note'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('f-discharge').value='';
+  document.getElementById('f-followup').value = today();
+  showToast('✅ દર્દી + Follow-up #1 સ્ટોર!');
+}
+
+// ── QUICK ADD VISIT ──
+function quickSearch() {
+  const q = document.getElementById('quick-ip').value.trim().toLowerCase();
+  const pts = load();
+  const p = pts.find(x => x.ip.toLowerCase()===q || x.name.toLowerCase().includes(q));
+  const el = document.getElementById('quick-result');
+  if (!p) { el.innerHTML=`<div style="color:var(--red);font-size:.82rem;font-family:'Noto Sans Gujarati',sans-serif;padding:8px 0;">❌ IP No. / નામ મળ્યો નહીં</div>`; return; }
+  renderQuickCard(p, el);
+}
+
+function renderQuickCard(p, el) {
+  const visitNo = p.visits.length + 1;
+  const t = today();
+  el.innerHTML = `
+  <div style="background:var(--light);border-radius:14px;padding:14px;border:2px solid var(--border);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div>
+        <div style="font-weight:700;font-size:.9rem;">${p.name}</div>
+        <div style="font-size:.72rem;color:var(--muted);">IP: ${p.ip} &nbsp;|&nbsp; UH: ${p.uh||'-'} &nbsp;|&nbsp; Discharge: ${fmtDate(p.discharge)}</div>
+      </div>
+      <span class="badge blue">Visits: ${p.visits.length}</span>
+    </div>
+    <div style="font-size:.8rem;font-weight:700;color:var(--blue);margin-bottom:10px;font-family:'Noto Sans Gujarati',sans-serif;">
+      ➕ Follow-up #${visitNo} ઉમેરવી
+    </div>
+    <div class="form-row" style="margin-bottom:10px;">
+      <div class="form-group" style="margin:0;">
+        <label>Visit Date</label>
+        <input type="date" id="qv-date-${p.id}" value="${t}" />
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label>નોંધ</label>
+        <input type="text" id="qv-note-${p.id}" placeholder="Optional..." />
+      </div>
+    </div>
+    <button class="btn-primary btn-sm" onclick="addVisit(${p.id},'qv')">✅ Follow-up #${visitNo} ઉમેરો</button>
+  </div>`;
+}
+
+function addVisit(id, prefix, refresh) {
+  const pts = load();
+  const p = pts.find(x => x.id===id);
+  if (!p) return;
+  const dateEl = document.getElementById(`${prefix}-date-${id}`);
+  const noteEl = document.getElementById(`${prefix}-note-${id}`);
+  const date = dateEl?.value;
+  const note = noteEl?.value?.trim()||'';
+  if (!date) { showToast('⚠️ Visit Date ભરો'); return; }
+
+  const st = getStatus(p.discharge, date);
+  if (st.cls==='expired' && !confirm('15 દિવસ ઓવર. છતાં ઉમેરવી?')) return;
+
+  p.visits.push({ num: p.visits.length+1, date, note });
+  save(pts);
+  showToast(`✅ Follow-up #${p.visits.length} ઉમેરાઈ!`);
+  if (refresh === 'status') { showStatus(); return; }
+  if (refresh === 'list')   { renderList(); calcStats('ls'); return; }
+  // refresh quick panel
+  const el = document.getElementById('quick-result');
+  const fresh = load().find(x=>x.id===id);
+  renderQuickCard(fresh, el);
+}
+
+// ── STATUS REPORT ──
+function showStatus(forceQuery) {
+  const q = forceQuery || document.getElementById('sr-query').value.trim().toLowerCase();
+  if (forceQuery) document.getElementById('sr-query').value = forceQuery;
+  const pts = load();
+  const matches = pts.filter(p => p.ip.toLowerCase().includes(q) || p.name.toLowerCase().includes(q));
+  const el = document.getElementById('sr-content');
+  if (!q) { el.innerHTML=''; return; }
+  if (!matches.length) { el.innerHTML=`<div class="card" style="text-align:center;color:var(--red);font-family:'Noto Sans Gujarati',sans-serif;">❌ કોઈ દર્દી મળ્યો નહીં</div>`; return; }
+  el.innerHTML = matches.map(p => buildSRCard(p)).join('');
+}
+
+function buildSRCard(p) {
+  const lastVisit = p.visits.length ? p.visits[p.visits.length-1].date : today();
+  const st = getStatus(p.discharge, lastVisit);
+  const pct = Math.min(Math.round(st.done/15*100),100);
+  const lastElig = new Date(p.discharge); lastElig.setDate(lastElig.getDate()+15);
+  const lastEligStr = lastElig.toISOString().split('T')[0];
+
+  const visitRows = p.visits.length === 0
+    ? `<div style="font-size:.78rem;color:var(--muted);padding:8px 0;font-family:'Noto Sans Gujarati',sans-serif;">કોઈ Visit નથી</div>`
+    : p.visits.map(v => {
+        const d = daysBetween(p.discharge, v.date);
+        const vs = getStatus(p.discharge, v.date);
+        return `<div class="visit-item ${vs.cls==='expired'?'exp-visit':''}">
+          <div class="v-num">${v.num}</div>
+          <div class="v-info">
+            <div class="vt">Follow-up #${v.num} &nbsp;— &nbsp;${fmtDate(v.date)}</div>
+            <div class="vs">Discharge ના ${d} મા દિવસે${v.note?' &nbsp;•&nbsp; '+v.note:''}</div>
+          </div>
+          <span class="badge ${vs.cls}">${vs.label}</span>
+        </div>`;
+      }).join('');
+
+  return `
+  <div class="sr-banner">
+    <div class="sr-name">👤 ${p.name}</div>
+    <div class="sr-meta">
+      IP No: <strong>${p.ip}</strong> &nbsp;|&nbsp; UH: ${p.uh||'-'}<br>
+      Discharge: ${fmtDate(p.discharge)} &nbsp;|&nbsp; છેલ્લી ઉ.તા: ${fmtDate(lastEligStr)}<br>
+      કુલ Visits: <strong>${p.visits.length}</strong>
+    </div>
+    <div class="sr-status">
+      <span class="badge ${st.cls}">${st.label}</span>
+      <span style="font-size:.78rem;color:#aac4e8;">${st.done} દિ. ગ. &nbsp;|&nbsp; ${st.cls!=='expired'?st.left+' દિ. બ.':'ઓવર'}</span>
+    </div>
+    <div class="prog-wrap"><div class="prog-fill ${st.cls}" style="width:${pct}%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:.7rem;color:#8aaed4;">
+      <span>0</span><span>${pct}%</span><span>15 દિ.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔄 Visit ઇતિહાસ (${p.visits.length} visits)</div>
+    <div class="visit-timeline">${visitRows}</div>
+    <div class="add-visit-section">
+      <div class="add-visit-title">➕ Follow-up #${p.visits.length+1} ઉમેરો</div>
+      <div class="form-row" style="margin-bottom:10px;">
+        <div class="form-group" style="margin:0;">
+          <label>Visit Date</label>
+          <input type="date" id="sv-date-${p.id}" value="${today()}" />
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label>નોંધ</label>
+          <input type="text" id="sv-note-${p.id}" placeholder="Optional..." />
+        </div>
+      </div>
+      <button class="btn-primary btn-sm" onclick="addVisit(${p.id},'sv','status')">✅ Visit ઉમેરો</button>
+    </div>
+  </div>`;
+}
+
+// ── LIST ──
+function renderList() {
+  const q = (document.getElementById('list-q')?.value||'').toLowerCase();
+  const pts = load();
+  const filtered = pts.filter(p => p.name.toLowerCase().includes(q) || p.ip.toLowerCase().includes(q) || (p.uh||'').toLowerCase().includes(q));
+  const tbody = document.getElementById('list-tbody');
+  const empty = document.getElementById('list-empty');
+  if (!filtered.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = filtered.map((p,i) => {
+    const lastDate = p.visits.length ? p.visits[p.visits.length-1].date : null;
+    const ref = lastDate || today();
+    const st = getStatus(p.discharge, ref);
+    return `<tr>
+      <td>${i+1}</td>
+      <td><strong>${p.name}</strong></td>
+      <td>${p.ip}</td>
+      <td>${p.uh||'-'}</td>
+      <td>${fmtDate(p.discharge)}</td>
+      <td><span class="badge blue">${p.visits.length} visits</span></td>
+      <td>${lastDate?fmtDate(lastDate):'-'}</td>
+      <td><span class="badge ${st.cls}">${st.label}</span></td>
+      <td style="display:flex;gap:4px;">
+        <button class="view-btn" onclick="openStatus('${p.ip}')">📊</button>
+        <button class="del-btn" onclick="delPatient(${p.id})">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openStatus(ip) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-status').classList.add('active');
+  document.querySelectorAll('.tab-btn')[1].classList.add('active');
+  showStatus(ip);
+}
+
+function delPatient(id) {
+  if (!confirm('દર્દી + બધી visits ડિલીટ કરવી?')) return;
+  save(load().filter(p=>p.id!==id));
+  renderList(); calcStats('ls');
+  showToast('🗑️ ડિલીટ!');
+}
+
+// ── EXCEL ──
+function exportExcel() {
+  const pts = load();
+  if (!pts.length) { showToast('⚠️ ડેટા નથી'); return; }
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1
+  const s1=[['#','દર્દીનું નામ','IP No.','UH No.','Discharge Date','Total Visits','Last Visit','Days Done','Days Left','Status']];
+  pts.forEach((p,i)=>{
+    const lastDate = p.visits.length?p.visits[p.visits.length-1].date:'';
+    const st = getStatus(p.discharge, lastDate||today());
+    s1.push([i+1,p.name,p.ip,p.uh||'',fmtDate(p.discharge),p.visits.length,fmtDate(lastDate),st.done,st.left,st.cls==='expired'?'Expired':st.cls==='warning'?'Warning':'Eligible']);
+  });
+  const ws1=XLSX.utils.aoa_to_sheet(s1);
+  ws1['!cols']=[{wch:4},{wch:20},{wch:12},{wch:12},{wch:16},{wch:12},{wch:16},{wch:12},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Patient Summary');
+
+  // Sheet 2
+  const s2=[['IP No.','નામ','UH No.','Discharge','Visit #','Visit Date','Day No.','Status','નોંધ']];
+  pts.forEach(p=>{
+    if (!p.visits.length) { s2.push([p.ip,p.name,p.uh||'',fmtDate(p.discharge),'-','-','-','No Visit','']); return; }
+    p.visits.forEach(v=>{
+      const d=daysBetween(p.discharge,v.date);
+      const st=getStatus(p.discharge,v.date);
+      s2.push([p.ip,p.name,p.uh||'',fmtDate(p.discharge),v.num,fmtDate(v.date),d,st.cls==='expired'?'Expired':st.cls==='warning'?'Warning':'Eligible',v.note||'']);
+    });
+  });
+  const ws2=XLSX.utils.aoa_to_sheet(s2);
+  ws2['!cols']=[{wch:12},{wch:20},{wch:12},{wch:16},{wch:8},{wch:16},{wch:10},{wch:12},{wch:22}];
+  XLSX.utils.book_append_sheet(wb,ws2,'All Follow-up Visits');
+
+  XLSX.writeFile(wb,`PMJAY_Report_${today()}.xlsx`);
+  showToast('📥 Excel ડાઉનલોડ!');
+}
+
+function clearAll() {
+  if (!confirm('બધો ડેટા ડિલીટ? Undo નહીં.')) return;
+  localStorage.removeItem(KEY);
+  renderList(); calcStats('ls'); calcStats('es');
+  showToast('🗑️ ડેટા ડિલીટ');
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+<script>
+  // Step 3 માંથી મળેલો તમારો સાચો Firebase કોડ અહીં પેસ્ટ કરો
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "your-project.firebaseapp.com",
+    databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+    projectId: "your-project",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "xxxx",
+    appId: "xxxx"
+  };
+
+  // Firebase Initialize કરો
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  // ડેટા સેવ કરવા માટેનો નવો ફંક્શન (જૂના લોકલસ્ટોરેજ ફંક્શનની જગ્યાએ)
+  function savePatientToFirebase(patientData) {
+      // આ કોડ ડેટાને સીધો ઓનલાઈન ક્લાઉડ પર મોકલશે
+      database.ref('patients/' + patientData.ipNo).set(patientData)
+      .then(() => {
+          alert("ડેટા ઓનલાઈન સેવ થઈ ગયો છે!");
+          loadPatientsFromFirebase(); // લિસ્ટ રીફ્રેશ કરવા
+      })
+      .catch((error) => {
+          console.error("ડેટા સેવ કરવામાં ભૂલ આવી: ", error);
+      });
+  }
+
+  // બધા કમ્પ્યુટરમાં ડેટા લાઈવ લાવવા માટેનું ફંક્શન
+  function loadPatientsFromFirebase() {
+      database.ref('patients').on('value', (snapshot) => {
+          const data = snapshot.val();
+          // આ ડેટાને તમારા ટેબલ (દર્દી યાદી) માં બતાવવાનો કોડ અહીં આવશે
+          console.log("લાઈવ ડેટા અપડેટ થયો:", data);
+      });
+  }
+
+  // પેજ લોડ થાય ત્યારે ડેટા ખેંચી લાવવો
+  window.onload = function() {
+      loadPatientsFromFirebase();
+  };
+</script>
+</script>
+</body>
+</html>
