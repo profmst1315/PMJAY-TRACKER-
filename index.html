@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM-JAY ફોલોઅપ ટ્રેકર</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b1e3d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PM-JAY">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0b1e3d;--blue:#1a3a6e;--accent:#f0a500;--green:#16a34a;--red:#dc2626;--orange:#ea580c;--light:#eef3fc;--border:#cdd8f0;--text:#1e293b;--muted:#64748b;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Poppins','Noto Sans Gujarati',sans-serif;background:#eef3fc;min-height:100vh;color:var(--text);}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0b1e3d 0%,#1a3a6e 60%,#0d2a50 100%);padding:16px;}
+.login-wrap{width:100%;max-width:400px;}
+.login-card{background:#fff;border-radius:24px;padding:32px 28px;box-shadow:0 24px 64px rgba(0,0,0,.35);}
+.login-header{text-align:center;margin-bottom:28px;}
+.login-logo-wrap{width:80px;height:80px;border-radius:20px;background:var(--light);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:40px;border:2px solid var(--border);overflow:hidden;}
+.login-logo-wrap img{width:100%;height:100%;object-fit:cover;border-radius:18px;}
+.login-title{font-size:1.15rem;font-weight:700;color:var(--navy);font-family:'Noto Sans Gujarati',sans-serif;}
+.login-sub{font-size:.76rem;color:var(--muted);margin-top:4px;}
+.login-pmjay{display:inline-block;background:var(--accent);color:var(--navy);font-size:.68rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-top:6px;}
+
+.form-group{margin-bottom:16px;}
+label{display:block;font-size:.76rem;font-weight:600;color:var(--muted);margin-bottom:5px;font-family:'Noto Sans Gujarati',sans-serif;}
+input[type=text],input[type=password],input[type=date],select{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:12px;font-size:.9rem;font-family:'Poppins',sans-serif;color:var(--text);background:var(--light);outline:none;transition:border .2s,background .2s;}
+input:focus,select:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(26,58,110,.1);}
+input::placeholder{color:#b0bdd4;}
+input:disabled{opacity:.6;cursor:not-allowed;}
+
+.btn-login{width:100%;padding:13px;background:linear-gradient(135deg,#1a3a6e,#2a5298);color:#fff;border:none;border-radius:13px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Noto Sans Gujarati',sans-serif;box-shadow:0 4px 14px rgba(26,58,110,.35);transition:transform .15s;margin-top:4px;}
+.btn-login:hover{transform:translateY(-2px);}
+.btn-login:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.login-err{color:var(--red);font-size:.78rem;text-align:center;margin-top:10px;font-family:'Noto Sans Gujarati',sans-serif;display:none;}
+
+/* APP */
+#app{display:none;}
+
+/* TOPBAR */
+.topbar{background:linear-gradient(135deg,#0b1e3d,#1a3a6e);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:60px;box-shadow:0 2px 16px rgba(0,0,0,.3);position:sticky;top:0;z-index:100;}
+.topbar-l{display:flex;align-items:center;gap:10px;}
+.hosp-logo-top{width:38px;height:38px;border-radius:9px;object-fit:cover;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid rgba(255,255,255,.2);overflow:hidden;}
+.hosp-logo-top img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
+.topbar-info h1{color:var(--accent);font-size:.88rem;font-weight:700;font-family:'Noto Sans Gujarati',sans-serif;line-height:1.2;}
+.topbar-info p{color:#8aaed4;font-size:.6rem;}
+.topbar-r{display:flex;align-items:center;gap:8px;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:blink 2s infinite;}
+.sync-dot.off{background:#f87171;animation:none;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.logout-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#aac4e8;padding:6px 12px;border-radius:8px;font-size:.7rem;cursor:pointer;font-family:'Noto Sans Gujarati',sans-serif;}
+
+/* TABS */
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);position:sticky;top:60px;z-index:99;}
+.tab-btn{flex:1;padding:12px 4px;background:none;border:none;font-size:.68rem;font-weight:700;color:var(--muted);cursor:pointer;font-family:'Noto Sans Gujarati',sans-serif;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);background:#f8faff;}
+
+/* PAGES */
+.page{display:none;padding:14px;max-width:660px;margin:0 auto;}
+.page.active{display:block;}
+
+/* CARD */
+.card{background:#fff;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 2px 14px rgba(0,0,0,.07);border:1px solid var(--border);}
+.card-title{font-size:.86rem;font-weight:700;color:var(--blue);margin-bottom:14px;display:flex;align-items:center;gap:8px;font-family:'Noto Sans Gujarati',sans-serif;padding-bottom:10px;border-bottom:2px solid var(--light);}
+
+/* FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{margin-bottom:12px;}
+.first-visit-box{background:linear-gradient(135deg,#f0f7ff,#e8f0fe);border:2px solid #bfdbfe;border-radius:14px;padding:14px;margin-bottom:14px;}
+.fv-label{font-size:.74rem;font-weight:700;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:6px;font-family:'Noto Sans Gujarati',sans-serif;}
+
+/* BUTTONS */
+.btn-primary{width:100%;padding:12px;background:linear-gradient(135deg,#1a3a6e,#2a5298);color:#fff;border:none;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Noto Sans Gujarati',sans-serif;box-shadow:0 4px 14px rgba(26,58,110,.3);transition:transform .15s;}
+.btn-primary:hover{transform:translateY(-1px);}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.btn-green{background:linear-gradient(135deg,#16a34a,#15803d) !important;}
+.btn-sm{padding:7px 14px !important;width:auto !important;font-size:.76rem !important;border-radius:9px !important;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.stat-card{background:#fff;border-radius:12px;padding:11px 6px;text-align:center;border:2px solid var(--border);}
+.stat-card .snum{font-size:1.6rem;font-weight:700;line-height:1;}
+.stat-card .slabel{font-size:.58rem;color:var(--muted);margin-top:3px;font-family:'Noto Sans Gujarati',sans-serif;}
+.c-blue .snum{color:var(--blue);}.c-green .snum{color:var(--green);}.c-red .snum{color:var(--red);}.c-orange .snum{color:var(--orange);}
+
+.search-bar{width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:11px;font-size:.85rem;font-family:'Poppins',sans-serif;outline:none;background:#fff;margin-bottom:12px;}
+.search-bar:focus{border-color:var(--blue);}
+
+.ip-row{display:flex;gap:8px;margin-bottom:12px;}
+.ip-row input{flex:1;}
+.ip-row button{padding:10px 14px;background:linear-gradient(135deg,#1a3a6e,#2a5298);color:#fff;border:none;border-radius:10px;font-size:.8rem;cursor:pointer;font-family:'Noto Sans Gujarati',sans-serif;font-weight:700;white-space:nowrap;}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;min-width:500px;}
+thead{background:linear-gradient(135deg,#0b1e3d,#1a3a6e);}
+thead th{color:#fff;padding:10px;font-size:.67rem;font-weight:600;text-align:left;white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:hover{background:var(--light);}
+tbody tr:last-child{border-bottom:none;}
+tbody td{padding:8px 10px;font-size:.74rem;white-space:nowrap;}
+
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:.65rem;font-weight:700;font-family:'Noto Sans Gujarati',sans-serif;}
+.badge.eligible{background:#dcfce7;color:#16a34a;}
+.badge.warning{background:#ffedd5;color:#ea580c;}
+.badge.expired{background:#fee2e2;color:#dc2626;}
+.badge.blue{background:#dbeafe;color:#1a3a6e;}
+
+.del-btn{background:none;border:1px solid #fca5a5;color:var(--red);border-radius:6px;padding:3px 7px;font-size:.66rem;cursor:pointer;}
+.del-btn:hover{background:#fee2e2;}
+.view-btn{background:none;border:1px solid var(--border);color:var(--blue);border-radius:6px;padding:3px 7px;font-size:.66rem;cursor:pointer;font-weight:600;}
+
+/* STATUS REPORT */
+.sr-banner{background:linear-gradient(135deg,#0b1e3d,#1a3a6e);border-radius:18px;padding:18px;color:#fff;margin-bottom:14px;}
+.sr-name{font-size:1rem;font-weight:700;font-family:'Noto Sans Gujarati',sans-serif;}
+.sr-meta{font-size:.72rem;color:#8aaed4;margin-top:4px;line-height:1.7;}
+.prog-wrap{background:rgba(255,255,255,.15);border-radius:50px;height:13px;overflow:hidden;margin:8px 0 4px;}
+.prog-fill{height:100%;border-radius:50px;transition:width .8s;}
+.prog-fill.eligible{background:linear-gradient(90deg,#4ade80,#16a34a);}
+.prog-fill.warning{background:linear-gradient(90deg,#fb923c,#ea580c);}
+.prog-fill.expired{background:linear-gradient(90deg,#f87171,#dc2626);}
+
+.visit-timeline{display:flex;flex-direction:column;gap:8px;}
+.visit-item{display:flex;align-items:center;gap:10px;background:var(--light);border-radius:12px;padding:10px 12px;border:1px solid var(--border);}
+.visit-item.exp-visit{border-color:#fca5a5;background:#fff5f5;}
+.v-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1a3a6e,#2a5298);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;}
+.exp-visit .v-num{background:linear-gradient(135deg,#dc2626,#b91c1c);}
+.v-info{flex:1;min-width:0;}
+.v-info .vt{font-size:.8rem;font-weight:700;}
+.v-info .vs{font-size:.68rem;color:var(--muted);margin-top:1px;}
+.v-del{background:none;border:1px solid #fca5a5;color:var(--red);border-radius:6px;padding:3px 8px;font-size:.68rem;cursor:pointer;flex-shrink:0;}
+.v-del:hover{background:#fee2e2;}
+
+.add-visit-section{border-top:2px dashed var(--border);margin-top:14px;padding-top:14px;}
+.add-visit-title{font-size:.78rem;font-weight:700;color:var(--blue);margin-bottom:10px;font-family:'Noto Sans Gujarati',sans-serif;}
+
+.empty-state{text-align:center;padding:32px 20px;color:var(--muted);font-family:'Noto Sans Gujarati',sans-serif;}
+.saving{display:none;position:fixed;top:70px;right:14px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:.7rem;color:var(--muted);box-shadow:0 2px 10px rgba(0,0,0,.1);z-index:200;align-items:center;gap:5px;}
+.saving.show{display:flex;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0b1e3d;color:#fff;padding:11px 22px;border-radius:30px;font-size:.8rem;font-family:'Noto Sans Gujarati',sans-serif;box-shadow:0 4px 24px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .3s;z-index:9999;white-space:nowrap;}
+.toast.show{opacity:1;}
+
+/* INSTALL BANNER */
+#install-banner{display:none;background:linear-gradient(135deg,#f0a500,#d4890a);padding:10px 16px;align-items:center;justify-content:space-between;gap:10px;}
+#install-banner p{color:#fff;font-size:.76rem;font-weight:600;font-family:'Noto Sans Gujarati',sans-serif;}
+#install-banner button{background:#fff;color:#d4890a;border:none;border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:700;cursor:pointer;}
+
+@media(max-width:420px){.form-row{grid-template-columns:1fr;}.stats-row{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo-wrap" id="login-logo-icon">🏥</div>
+        <div class="login-title" id="login-hosp-name">PM-JAY ફોલોઅપ ટ્રેકર</div>
+        <div class="login-sub">Hospital Login</div>
+        <span class="login-pmjay">Pradhan Mantri Jan Arogya Yojana</span>
+      </div>
+      <div class="form-group">
+        <label>Hospital Code</label>
+        <input type="text" id="l-code" placeholder="HOSP001" style="text-transform:uppercase;" onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <button class="btn-login" id="login-btn" onclick="doLogin()">🔐 Login</button>
+      <p class="login-err" id="login-err">❌ Hospital Code અથવા Password ખોટો</p>
+    </div>
+  </div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner">
+  <p>📱 App Install કરો</p>
+  <button id="install-btn">Install</button>
+  <button onclick="document.getElementById('install-banner').style.display='none'" style="background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer;">✕</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-l">
+      <div class="hosp-logo-top" id="top-logo">🏥</div>
+      <div class="topbar-info">
+        <h1 id="top-hosp-name">Hospital</h1>
+        <p>PM-JAY • 15-Day Follow-up</p>
+      </div>
+    </div>
+    <div class="topbar-r">
+      <div class="sync-dot off" id="sync-dot"></div>
+      <span style="color:#aac4e8;font-size:.6rem;" id="sync-label">...</span>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('add',this)">➕ નવો</button>
+    <button class="tab-btn"       onclick="switchTab('status',this)">📊 Status</button>
+    <button class="tab-btn"       onclick="switchTab('list',this)">📋 યાદી</button>
+    <button class="tab-btn"       onclick="switchTab('excel',this)">📥 Excel</button>
+  </div>
+
+  <div class="saving" id="saving-ind">⏳ સ્ટોર...</div>
+
+  <!-- ADD -->
+  <div class="page active" id="page-add">
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title">📝 દર્દીની માહિતી ઉમેરો</div>
+      <div class="form-group"><label>દર્દીનું નામ *</label><input type="text" id="f-name" placeholder="દા.ત. રાજેશ પટેલ" /></div>
+      <div class="form-row">
+        <div class="form-group"><label>IP No. *</label><input type="text" id="f-ip" placeholder="IP નંબર" /></div>
+        <div class="form-group"><label>UH No.</label><input type="text" id="f-uh" placeholder="UH નંબર" /></div>
+      </div>
+      <div class="form-group"><label>Discharge Date *</label><input type="date" id="f-discharge" /></div>
+      <div class="first-visit-box">
+        <div class="fv-label">🔄 Follow-up Visit #1</div>
+        <div class="form-row">
+          <div class="form-group" style="margin:0;"><label>Follow-up Date *</label><input type="date" id="f-followup" /></div>
+          <div class="form-group" style="margin:0;"><label>નોંધ</label><input type="text" id="f-note" placeholder="Optional..." /></div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-add" onclick="addPatient()">✅ સ્ટોર કરો</button>
+    </div>
+    <div class="card">
+      <div class="card-title">🔄 Follow-up ઉમેરો (IP No. દ્વારા)</div>
+      <div class="ip-row">
+        <input type="text" id="quick-ip" placeholder="IP No. ..." />
+        <button onclick="quickSearch()">શોધો</button>
+      </div>
+      <div id="quick-result"></div>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="page" id="page-status">
+    <div style="margin-top:14px;">
+      <div class="card">
+        <div class="card-title">🔍 IP / નામ Status</div>
+        <div class="ip-row">
+          <input type="text" id="sr-query" placeholder="IP No. અથવા નામ..." />
+          <button onclick="showStatus()">જૂઓ</button>
+        </div>
+      </div>
+      <div id="sr-content"></div>
+    </div>
+  </div>
+
+  <!-- LIST -->
+  <div class="page" id="page-list">
+    <div style="margin-top:14px;">
+      <div class="stats-row">
+        <div class="stat-card c-blue"><div class="snum" id="ls-total">0</div><div class="slabel">કુલ</div></div>
+        <div class="stat-card c-green"><div class="snum" id="ls-elig">0</div><div class="slabel">✅ ઉ.</div></div>
+        <div class="stat-card c-red"><div class="snum" id="ls-exp">0</div><div class="slabel">❌ ઓ.</div></div>
+        <div class="stat-card c-orange"><div class="snum" id="ls-vis">0</div><div class="slabel">Visits</div></div>
+      </div>
+      <input class="search-bar" type="text" id="list-q" placeholder="🔍 નામ / IP / UH..." oninput="renderList()" />
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>નામ</th><th>IP No.</th><th>UH No.</th><th>Discharge</th><th>Visits</th><th>Last Visit</th><th>Status</th><th></th></tr></thead>
+          <tbody id="list-tbody"></tbody>
+        </table>
+        <div id="list-empty" class="empty-state" style="display:none;"><div style="font-size:36px;margin-bottom:8px;">🏥</div>કોઈ દર્દી નથી</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXCEL -->
+  <div class="page" id="page-excel">
+    <div style="margin-top:14px;">
+      <div class="card">
+        <div class="card-title">📊 Excel Report</div>
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px;font-family:'Noto Sans Gujarati',sans-serif;">2 Sheets: Patient Summary + All Visits</p>
+        <div class="stats-row">
+          <div class="stat-card c-blue"><div class="snum" id="es-total">0</div><div class="slabel">કુલ</div></div>
+          <div class="stat-card c-green"><div class="snum" id="es-elig">0</div><div class="slabel">✅</div></div>
+          <div class="stat-card c-red"><div class="snum" id="es-exp">0</div><div class="slabel">❌</div></div>
+          <div class="stat-card c-orange"><div class="snum" id="es-vis">0</div><div class="slabel">Visits</div></div>
+        </div>
+        <button class="btn-primary btn-green" style="margin-bottom:10px;" onclick="exportExcel()">⬇️ Excel ડાઉનલોડ</button>
+        <button onclick="clearAll()" style="width:100%;padding:10px;background:none;border:2px solid #fca5a5;color:var(--red);border-radius:11px;font-size:.8rem;font-weight:600;cursor:pointer;font-family:'Noto Sans Gujarati',sans-serif;">🗑️ Hospital નો બધો ડેટા ડિલીટ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- PWA -->
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js').catch(()=>{}));
+}
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('install-banner').style.display='flex';
+});
+document.getElementById('install-btn').addEventListener('click',async()=>{
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  document.getElementById('install-banner').style.display='none';
+  deferredPrompt=null;
+});
+</script>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, doc,
+  addDoc, getDocs, updateDoc, deleteDoc,
+  onSnapshot, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBtSQX-9vWtCyAei5VkBNJd-hk9Q3UpyZM",
+  authDomain: "pmjay-tracker.firebaseapp.com",
+  projectId: "pmjay-tracker",
+  storageBucket: "pmjay-tracker.firebasestorage.app",
+  messagingSenderId: "998566041305",
+  appId: "1:998566041305:web:c3d726530439e147bad0c8"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+// HELPERS
+const fmtDate=s=>{if(!s)return '';const[y,m,d]=s.split('-');return `${d}/${m}/${y}`;};
+const today=()=>new Date().toISOString().split('T')[0];
+const daysBetween=(a,b)=>{const da=new Date(a);da.setHours(0,0,0,0);const db2=new Date(b);db2.setHours(0,0,0,0);return Math.floor((db2-da)/86400000);};
+function getSt(dis,ref){
+  const diff=daysBetween(dis,ref),left=15-diff;
+  if(diff<0)return{cls:'eligible',label:'ડિ.ઘ.નથી',done:0,left:15};
+  if(left>3)return{cls:'eligible',label:'✅ ઉ.',done:diff,left};
+  if(left>0)return{cls:'warning',label:'⚠️ ઓ.',done:diff,left};
+  return{cls:'expired',label:'❌ ઓવ.',done:Math.min(diff,15),left:0};
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function saving(s){document.getElementById('saving-ind').classList.toggle('show',s);}
+
+// STATE
+let currentHosp=null, pts=[], unsubscribe=null;
+
+// HOSPITALS — load from Firebase
+const hCol=collection(db,"hospitals");
+
+async function loadHospitals(){
+  const snap=await getDocs(hCol);
+  return snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+
+// LOGIN
+window.doLogin=async function(){
+  const code=document.getElementById('l-code').value.trim().toUpperCase();
+  const pass=document.getElementById('l-pass').value;
+  if(!code||!pass){toast('⚠️ Code & Password ભરો');return;}
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true;btn.textContent='⏳ ...';
+  try{
+    const hospitals=await loadHospitals();
+    const h=hospitals.find(x=>x.code===code&&x.pass===pass&&x.status==='active');
+    if(!h){
+      document.getElementById('login-err').style.display='block';
+      setTimeout(()=>document.getElementById('login-err').style.display='none',3000);
+      return;
+    }
+    currentHosp=h;
+    sessionStorage.setItem('pmjay_hosp',JSON.stringify({id:h.id,name:h.name,code:h.code,logo:h.logo||''}));
+    startApp(h);
+  }catch(e){toast('❌ '+e.message);}
+  finally{btn.disabled=false;btn.textContent='🔐 Login';}
+};
+
+function startApp(h){
+  // Update UI
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('top-hosp-name').textContent=h.name;
+  if(h.logo){
+    document.getElementById('top-logo').innerHTML=`<img src="${h.logo}" />`;
+  }
+  document.getElementById('f-followup').value=today();
+  startListener(h.id);
+}
+
+window.doLogout=function(){
+  sessionStorage.removeItem('pmjay_hosp');
+  if(unsubscribe)unsubscribe();
+  pts=[];currentHosp=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('l-code').value='';
+  document.getElementById('l-pass').value='';
+};
+
+// Auto-login
+const saved=sessionStorage.getItem('pmjay_hosp');
+if(saved){
+  const h=JSON.parse(saved);
+  currentHosp=h;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('top-hosp-name').textContent=h.name;
+  if(h.logo) document.getElementById('top-logo').innerHTML=`<img src="${h.logo}" />`;
+  document.getElementById('f-followup').value=today();
+  startListener(h.id);
+}
+
+// REALTIME LISTENER — per hospital subcollection
+function startListener(hospId){
+  const pCol=collection(db,`hospitals/${hospId}/patients`);
+  const q=query(pCol,orderBy("createdAt","asc"));
+  unsubscribe=onSnapshot(q,snap=>{
+    pts=snap.docs.map(d=>({fid:d.id,...d.data()}));
+    const at=document.querySelector('.tab-btn.active');
+    if(at){
+      const txt=at.textContent;
+      if(txt.includes('યાદી')){calcStats('ls');renderList();}
+      if(txt.includes('Excel')){calcStats('es');}
+      if(txt.includes('Status')){const qv=document.getElementById('sr-query').value.trim();if(qv)showStatus();}
+    }
+    document.getElementById('sync-dot').classList.remove('off');
+    document.getElementById('sync-label').textContent='Live ✓';
+  },err=>{
+    document.getElementById('sync-dot').classList.add('off');
+    document.getElementById('sync-label').textContent='Offline';
+  });
+}
+
+function pCol(){return collection(db,`hospitals/${currentHosp.id}/patients`);}
+
+// TABS
+window.switchTab=function(tab,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  el.classList.add('active');
+  if(tab==='list'){calcStats('ls');renderList();}
+  if(tab==='excel'){calcStats('es');}
+};
+
+function calcStats(pfx){
+  let el=0,ex=0,vi=0;
+  pts.forEach(p=>{
+    vi+=(p.visits||[]).length;
+    const ref=p.visits?.length?p.visits[p.visits.length-1].date:today();
+    if(getSt(p.discharge,ref).cls==='expired')ex++;else el++;
+  });
+  document.getElementById(pfx+'-total').textContent=pts.length;
+  document.getElementById(pfx+'-elig').textContent=el;
+  document.getElementById(pfx+'-exp').textContent=ex;
+  document.getElementById(pfx+'-vis').textContent=vi;
+}
+
+// ADD PATIENT
+window.addPatient=async function(){
+  const name=document.getElementById('f-name').value.trim();
+  const ip=document.getElementById('f-ip').value.trim();
+  const uh=document.getElementById('f-uh').value.trim();
+  const disc=document.getElementById('f-discharge').value;
+  const fuDate=document.getElementById('f-followup').value;
+  const fuNote=document.getElementById('f-note').value.trim();
+  if(!name){toast('⚠️ નામ ભરો');return;}
+  if(!ip){toast('⚠️ IP No. ભરો');return;}
+  if(!disc){toast('⚠️ Discharge Date ભરો');return;}
+  if(!fuDate){toast('⚠️ Follow-up Date ભરો');return;}
+  if(pts.find(p=>p.ip===ip)){toast('⚠️ IP No. પહેલાથી છે');return;}
+  const st=getSt(disc,fuDate);
+  if(st.cls==='expired'&&!confirm('15 દિ. ઓવર. ઉમેરવું?'))return;
+  const btn=document.getElementById('btn-add');
+  btn.disabled=true;btn.textContent='⏳...';saving(true);
+  try{
+    await addDoc(pCol(),{name,ip,uh,discharge:disc,visits:[{num:1,date:fuDate,note:fuNote}],createdAt:new Date().toISOString()});
+    ['f-name','f-ip','f-uh','f-note'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-discharge').value='';
+    document.getElementById('f-followup').value=today();
+    toast('✅ સ્ટોર!');
+  }catch(e){toast('❌ '+e.message);}
+  finally{btn.disabled=false;btn.textContent='✅ સ્ટોર કરો';saving(false);}
+};
+
+// QUICK SEARCH
+window.quickSearch=function(){
+  const q=document.getElementById('quick-ip').value.trim().toLowerCase();
+  const p=pts.find(x=>x.ip.toLowerCase()===q||x.name.toLowerCase().includes(q));
+  const el=document.getElementById('quick-result');
+  if(!p){el.innerHTML=`<div style="color:var(--red);font-size:.8rem;padding:8px 0;font-family:'Noto Sans Gujarati',sans-serif;">❌ મળ્યો નહીં</div>`;return;}
+  renderQuick(p,el);
+};
+function renderQuick(p,el){
+  const vn=(p.visits||[]).length+1,t=today();
+  el.innerHTML=`<div style="background:var(--light);border-radius:12px;padding:14px;border:2px solid var(--border);">
+    <div style="font-weight:700;font-size:.88rem;margin-bottom:4px;">${p.name} <span class="badge blue">IP: ${p.ip}</span></div>
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:10px;">Discharge: ${fmtDate(p.discharge)} | Visits: ${(p.visits||[]).length}</div>
+    <div style="font-size:.78rem;font-weight:700;color:var(--blue);margin-bottom:10px;font-family:'Noto Sans Gujarati',sans-serif;">➕ Follow-up #${vn}</div>
+    <div class="form-row" style="margin-bottom:10px;">
+      <div class="form-group" style="margin:0;"><label>Visit Date</label><input type="date" id="qv-date-${p.fid}" value="${t}"/></div>
+      <div class="form-group" style="margin:0;"><label>નોંધ</label><input type="text" id="qv-note-${p.fid}" placeholder="Optional..."/></div>
+    </div>
+    <button class="btn-primary btn-sm" onclick="addVisit('${p.fid}','qv','quick')">✅ ઉમેરો</button>
+  </div>`;
+}
+
+window.addVisit=async function(fid,pfx,rt){
+  const p=pts.find(x=>x.fid===fid);if(!p)return;
+  const date=document.getElementById(`${pfx}-date-${fid}`)?.value;
+  const note=document.getElementById(`${pfx}-note-${fid}`)?.value?.trim()||'';
+  if(!date){toast('⚠️ Visit Date ભરો');return;}
+  if(getSt(p.discharge,date).cls==='expired'&&!confirm('15 દિ. ઓવર. ઉમેરવી?'))return;
+  saving(true);
+  try{
+    const nv=[...(p.visits||[]),{num:(p.visits||[]).length+1,date,note}];
+    await updateDoc(doc(db,`hospitals/${currentHosp.id}/patients`,fid),{visits:nv});
+    toast(`✅ Follow-up #${nv.length}!`);
+    if(rt==='status')setTimeout(()=>showStatus(),400);
+    if(rt==='quick'){const f=pts.find(x=>x.fid===fid);if(f)renderQuick(f,document.getElementById('quick-result'));}
+  }catch(e){toast('❌ '+e.message);}
+  finally{saving(false);}
+};
+
+window.deleteVisit=async function(fid,vnum){
+  if(!confirm(`Follow-up #${vnum} ડિલીટ?`))return;
+  const p=pts.find(x=>x.fid===fid);if(!p)return;
+  saving(true);
+  try{
+    let nv=(p.visits||[]).filter(v=>v.num!==vnum).map((v,i)=>({...v,num:i+1}));
+    await updateDoc(doc(db,`hospitals/${currentHosp.id}/patients`,fid),{visits:nv});
+    toast('🗑️ Visit ડિલીટ!');
+    setTimeout(()=>showStatus(),400);
+  }catch(e){toast('❌ '+e.message);}
+  finally{saving(false);}
+};
+
+window.showStatus=function(fq){
+  const q=(fq||document.getElementById('sr-query').value.trim()).toLowerCase();
+  if(fq)document.getElementById('sr-query').value=fq;
+  const el=document.getElementById('sr-content');
+  if(!q){el.innerHTML='';return;}
+  const m=pts.filter(p=>p.ip.toLowerCase().includes(q)||p.name.toLowerCase().includes(q));
+  if(!m.length){el.innerHTML=`<div class="card" style="text-align:center;color:var(--red);font-family:'Noto Sans Gujarati',sans-serif;">❌ મળ્યો નહીં</div>`;return;}
+  el.innerHTML=m.map(p=>buildSR(p)).join('');
+};
+
+function buildSR(p){
+  const v=p.visits||[];
+  const last=v.length?v[v.length-1].date:today();
+  const st=getSt(p.discharge,last);
+  const pct=Math.min(Math.round(st.done/15*100),100);
+  const le=new Date(p.discharge);le.setDate(le.getDate()+15);
+  const rows=v.length===0
+    ?`<div style="font-size:.76rem;color:var(--muted);padding:8px;font-family:'Noto Sans Gujarati',sans-serif;">કોઈ Visit નથી</div>`
+    :v.map(vi=>{
+      const d=daysBetween(p.discharge,vi.date);
+      const vs=getSt(p.discharge,vi.date);
+      return `<div class="visit-item ${vs.cls==='expired'?'exp-visit':''}">
+        <div class="v-num">${vi.num}</div>
+        <div class="v-info">
+          <div class="vt">Follow-up #${vi.num} — ${fmtDate(vi.date)}</div>
+          <div class="vs">Discharge ના ${d} મા દિ.${vi.note?' • '+vi.note:''}</div>
+        </div>
+        <span class="badge ${vs.cls}" style="margin-right:6px;">${vs.label}</span>
+        <button class="v-del" onclick="deleteVisit('${p.fid}',${vi.num})">🗑️</button>
+      </div>`;
+    }).join('');
+  return `
+  <div class="sr-banner">
+    <div class="sr-name">👤 ${p.name}</div>
+    <div class="sr-meta">IP: <strong>${p.ip}</strong> | UH: ${p.uh||'-'}<br>Discharge: ${fmtDate(p.discharge)} | ઉ.તા: ${fmtDate(le.toISOString().split('T')[0])}<br>Visits: <strong>${v.length}</strong></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <span class="badge ${st.cls}">${st.label}</span>
+      <span style="font-size:.7rem;color:#aac4e8;">${st.done} ગ. | ${st.cls!=='expired'?st.left+' બ.':'ઓવર'}</span>
+    </div>
+    <div class="prog-wrap"><div class="prog-fill ${st.cls}" style="width:${pct}%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:.64rem;color:#8aaed4;"><span>0</span><span>${pct}%</span><span>15 દિ.</span></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🔄 Visits (${v.length})</div>
+    <div class="visit-timeline">${rows}</div>
+    <div class="add-visit-section">
+      <div class="add-visit-title">➕ Follow-up #${v.length+1}</div>
+      <div class="form-row" style="margin-bottom:10px;">
+        <div class="form-group" style="margin:0;"><label>Date</label><input type="date" id="sv-date-${p.fid}" value="${today()}"/></div>
+        <div class="form-group" style="margin:0;"><label>નોંધ</label><input type="text" id="sv-note-${p.fid}" placeholder="Optional..."/></div>
+      </div>
+      <button class="btn-primary btn-sm" onclick="addVisit('${p.fid}','sv','status')">✅ ઉમેરો</button>
+    </div>
+  </div>`;
+}
+
+window.renderList=function(){
+  const q=(document.getElementById('list-q')?.value||'').toLowerCase();
+  const f=pts.filter(p=>p.name.toLowerCase().includes(q)||p.ip.toLowerCase().includes(q)||(p.uh||'').toLowerCase().includes(q));
+  const tb=document.getElementById('list-tbody');
+  const em=document.getElementById('list-empty');
+  if(!f.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=f.map((p,i)=>{
+    const v=p.visits||[];
+    const ld=v.length?v[v.length-1].date:null;
+    const st=getSt(p.discharge,ld||today());
+    return `<tr>
+      <td>${i+1}</td><td><strong>${p.name}</strong></td><td>${p.ip}</td><td>${p.uh||'-'}</td>
+      <td>${fmtDate(p.discharge)}</td>
+      <td><span class="badge blue">${v.length}</span></td>
+      <td>${ld?fmtDate(ld):'-'}</td>
+      <td><span class="badge ${st.cls}">${st.label}</span></td>
+      <td style="display:flex;gap:4px;">
+        <button class="view-btn" onclick="openSt('${p.ip}')">📊</button>
+        <button class="del-btn" onclick="delPt('${p.fid}')">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+};
+
+window.openSt=function(ip){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-status').classList.add('active');
+  document.querySelectorAll('.tab-btn')[1].classList.add('active');
+  window.showStatus(ip);
+};
+
+window.delPt=async function(fid){
+  if(!confirm('દર્દી ડિલીટ?'))return;
+  saving(true);
+  try{await deleteDoc(doc(db,`hospitals/${currentHosp.id}/patients`,fid));toast('🗑️ ડિલીટ!');}
+  catch(e){toast('❌ '+e.message);}
+  finally{saving(false);}
+};
+
+window.exportExcel=function(){
+  if(!pts.length){toast('⚠️ ડેટા નથી');return;}
+  const wb=XLSX.utils.book_new();
+  const hn=currentHosp?.name||'Hospital';
+  const s1=[['Hospital',hn],['Export Date',fmtDate(today())],[],['#','નામ','IP No.','UH No.','Discharge','Total Visits','Last Visit','Days Done','Days Left','Status']];
+  pts.forEach((p,i)=>{
+    const v=p.visits||[];const ld=v.length?v[v.length-1].date:'';
+    const st=getSt(p.discharge,ld||today());
+    s1.push([i+1,p.name,p.ip,p.uh||'',fmtDate(p.discharge),v.length,fmtDate(ld),st.done,st.left,st.cls==='expired'?'Expired':st.cls==='warning'?'Warning':'Eligible']);
+  });
+  const ws1=XLSX.utils.aoa_to_sheet(s1);
+  ws1['!cols']=[{wch:4},{wch:20},{wch:12},{wch:12},{wch:16},{wch:12},{wch:16},{wch:12},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Patient Summary');
+  const s2=[['IP No.','નામ','UH No.','Discharge','Visit #','Visit Date','Day No.','Status','નોંધ']];
+  pts.forEach(p=>{
+    const v=p.visits||[];
+    if(!v.length){s2.push([p.ip,p.name,p.uh||'',fmtDate(p.discharge),'-','-','-','No Visit','']);return;}
+    v.forEach(vi=>{
+      const d=daysBetween(p.discharge,vi.date);
+      const st=getSt(p.discharge,vi.date);
+      s2.push([p.ip,p.name,p.uh||'',fmtDate(p.discharge),vi.num,fmtDate(vi.date),d,st.cls==='expired'?'Expired':st.cls==='warning'?'Warning':'Eligible',vi.note||'']);
+    });
+  });
+  const ws2=XLSX.utils.aoa_to_sheet(s2);
+  ws2['!cols']=[{wch:12},{wch:20},{wch:12},{wch:16},{wch:8},{wch:16},{wch:10},{wch:12},{wch:22}];
+  XLSX.utils.book_append_sheet(wb,ws2,'All Visits');
+  XLSX.writeFile(wb,`${hn}_PMJAY_${today()}.xlsx`);
+  toast('📥 Excel ડાઉનલોડ!');
+};
+
+window.clearAll=async function(){
+  if(!confirm('Hospital નો બધો ડેટા ડિલીટ?'))return;
+  saving(true);
+  try{
+    const sn=await getDocs(pCol());
+    await Promise.all(sn.docs.map(d=>deleteDoc(doc(db,`hospitals/${currentHosp.id}/patients`,d.id))));
+    toast('🗑️ ડેટા ડિલીટ');
+  }catch(e){toast('❌ '+e.message);}
+  finally{saving(false);}
+};
+</script>
+</body>
+</html>
